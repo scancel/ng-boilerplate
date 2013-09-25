@@ -1,0 +1,123 @@
+<section data-ng-controller="MessagesController">
+    <div class="container-fluid" id="messages">
+        <div class="row-fluid">
+            <div class="span2">
+                <div class="sidebar-nav">
+
+                    <button ng-click="openComposer()" class="btn btn-primary compose"><i class="icon-edit icon-white"></i>Compose</button>
+
+                    <br>
+                    <br>
+
+                    <ul class="nav nav-list">
+                        <li class="nav-header">Folders</li>
+                        <li ng-repeat="folder in foldersNames" ng-click="selectFolder(folder);"><a><i ng-class="{'icon-folder-close': folder != selectedFolder, 'icon-folder-open': folder == selectedFolder}"></i>{{folder}}</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="span10">
+
+                <div class="btn-toolbar top-btn-toolbar">
+                    <div class="btn-group">
+                        <button class="btn" data-toggle="modal" href="#myModal" role="button" ng-disabled="!selectedMail" ng-click="cloneToReply(selectedMail)"><i class="icon-pencil"></i>reply</button>
+                        <button class="btn" data-toggle="modal" href="#myModal" role="button" ng-click="cloneToForward(selectedMail)" ng-disabled="!selectedMail"><i class="icon-arrow-right"></i>forward</button>
+                        <button class="btn" ng-disabled="!selectedMail"><i class="icon-move"></i>
+                            <label>
+                                <input type="checkbox" ng-disabled="!selectedMail" ng-model="moveTo" class="hide" />
+                                move</label></button>
+                        <button class="btn mail-action" ng-disabled="!selectedMail" ng-click="selectedMail.folder = 'Trash';selectedMail = null;"><i class="icon-trash"></i>delete</button>
+                    </div>
+                </div>
+                <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)">{{alert.msg}}</alert>
+                <table class="hero-unit table table-hover" style="background-color: #FFFFFF" id="ssss" ng-hide="currentMail">
+                    <tbody>
+                        <tr ng-repeat="mail in folders[selectedFolder]" ng-click="selectMail(mail)" ng-mouseenter="mouseenterMail(mail)" ng-mouseleave="mouseleaveMail(mail)" ng-class="{selected: selectedMail == mail}" ng-dblclick="ShowMail(mail)">
+                            <td>
+                                <div class="row-fluid">
+                                    <div class="span12">
+                                        <div class="row-fluid">
+                                            <div class="span6">
+                                                <div class="sender">
+                                                    <span class="badge badge-info"><i class="icon-envelope icon-white"></i></span><span class="badge badge-important" ng-show="mail.important"><i class="icon-exclamation-sign icon-white"></i></span>&nbsp;{{mail.sFrom}}
+                                                </div>
+                                            </div>
+                                            <div class="span6">
+                                                <div class="pull-right date"><span am-time-ago="mail.dtSendTime"></span></div>
+                                            </div>
+                                        </div>
+                                        <div class="row-fluid">
+                                            <div class="span10">
+                                                {{mail.sSubject}}
+                                            </div>
+                                            <div class="span2">
+                                                <div class="pull-right">
+                                                    <div class="btn-group" ng-show='mail.hover'>
+                                                        <button class="btn btn-mini btn-warning" ng-click="cloneToReply(mail)"><i class="icon-pencil icon-white"></i></button>
+                                                        <button class="btn btn-mini btn-warning" data-toggle="modal" href="#myModal" role="button" ng-click="cloneToForward(mail)"><i class="icon-arrow-right icon-white"></i></button>
+                                                        <button class="btn btn-mini btn-warning" ng-click="toggleArchive($index)" ng-hide="selectedFolder == 'Sent'"><i class="icon-move icon-white"></i>
+                                                            <input type="checkbox" ng-model="moveTo" class="hide" /></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div ng-show="currentMail">
+                    <div class="btn-toolbar top-btn-toolbar">
+                        <div class="btn-group">
+                            <button class="btn" data-toggle="modal" href="#myModal" role="button" ng-disabled="disablePrevBtn" ng-click="PrevMail(currentMail)"><i class="icon-arrow-left"></i>Previous mail</button>
+                            <button class="btn" data-toggle="modal" href="#myModal" role="button" ng-disabled="disableNextBtn" ng-click="NextMail(currentMail)"><i class="icon-arrow-right"></i>Next mail</button>
+                            <button class="btn" data-toggle="modal" href="#myModal" role="button" ng-click="CloseMail()"><i class="icon-minus"></i>close mail</button>
+                        </div>
+                    </div>
+                    <h4>{{currentMail.subject}}</h4>
+                    <h6>{{currentMail.from}} &lt; {{currentMail.fromSMTP}} &gt;</h6>
+                    <iframe id="message-iframe" src="{{currentMail.url}}" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div modal="composerModal" close="closeComposer()" options="optsComposer">
+        <div class="modal-header">
+            <h3 ng-show="reply">Reply to {{newMail.sFrom}}</h3>
+            <h3 ng-show="forward">Forward to {{newMail.sFrom}}</h3>
+            <h3 ng-show="new">Compose new message</h3>
+        </div>
+        <div class="modal-body">
+            <div class="row-fluid" ng-show="new">
+                <label>
+                    Recipient:
+                    <select ng-model="newMail.sFrom" ng-options="contact.sEmail as (contact.sName + ' - ' + contact.sTitle) for contact in contacts" class="span12">
+                        <option value="">--Select Contact--</option>
+                    </select>
+                </label>
+            </div>
+            <div class="row-fluid">
+                <label>
+                    Subject:
+                <input ng-model="newMail.sSubject" type="text" placeholder="subject" class="span12" />
+                </label>
+            </div>
+            <div class="row-fluid">
+                <label>
+                    Text:
+                    <textarea ng-model="newMail.text" class="span12"></textarea>
+                </label>
+            </div>
+            <div class="row-fluid">
+                <label>Important
+                    <input type="checkbox" ng-model="newMail.important" /></label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" ng-disabled="canSend()" ng-click="send()">Send</button>
+            <button class="btn cancel" ng-click="closeComposer()">Cancel</button>
+        </div>
+    </div>
+</section>
